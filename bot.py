@@ -50,11 +50,16 @@ async def on_message(message):
         f = open(f'{message.guild.name} linkList.txt', 'r')
         linkList = f.readlines()
         f.close()        
-        while len(linkList) >= 100: # Culls old links when there are more than 1000.
+        while len(linkList) >= 100: # Culls old links when there are more than 100.
             del linkList[0]
             f = open(f'{message.guild.name} linkList.txt', 'w')
-            f.write(linkList)
+            f.write(linkList[0])
             f.close()
+            del linkList[0]
+            for x in range(len(linkList)):
+                f = open(f'{message.guild.name} linkList.txt', 'a')
+                f.write(linkList[x])
+                f.close()            
 
         for y in range(len(links)): # Loops through the links that were just posted and checks them against all old links.
             for x in linkList:
@@ -69,7 +74,10 @@ async def on_message(message):
                     tempList = str(message.created_at).split(sep=' ')
                     currentTime[0] = tempList[0]
                     timeList = tempList[1].split(sep=':')
-                    realHours = int(timeList[0]) - 5 
+                    if int(timeList[0]) <= 4:
+                        realHours = int(timeList[0]) + 7
+                    else:
+                        realHours = int(timeList[0]) - 5 
                     currentTime[1] = str(realHours)
                     currentTime[2] = timeList[1]
                     finalList = timeList[2].split(sep='.')
