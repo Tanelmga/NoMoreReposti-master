@@ -3,10 +3,16 @@
 import os
 import random
 import re
-#import urllib.request as ul
+
+import reposti
+import uwu
+import thank
+import ggs
+
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver import Firefox
+from nltk.corpus import words
 
 import discord
 from dotenv import load_dotenv
@@ -25,6 +31,11 @@ EightBallList = ['Reply hazy, try again later.',
              'More than likely.',
              'Doubtful, but possible.',
              'Eons could pass before such a thing is true.']
+
+deezList = [' deez nuts',
+            ' my dick',
+            ' in your mouth']
+    
 
 opt = Options()
 opt.add_argument("--headless")
@@ -65,10 +76,12 @@ async def on_message(message):
             await message.channel.send(
                 f'YOU\'RE WELCOME <@{message.author.id}>'
                 )
+            return
         elif 'reposti' in message.content.lower():
             await message.channel.send(
                 f'YOU\'RE WELCOME <@{message.author.id}>'
                 )
+            return
         return
 
     elif 'thank you' in message.content.lower():
@@ -76,10 +89,12 @@ async def on_message(message):
             await message.channel.send(
                 f'YOU\'RE WELCOME <@{message.author.id}>'
                 )
+            return
         elif 'reposti' in message.content.lower():    
             await message.channel.send(
                 f'YOU\'RE WELCOME <@{message.author.id}>'
                 )
+            return
         return
 
     elif 'nice repost' in message.content.lower():
@@ -125,29 +140,23 @@ async def on_message(message):
             else:
                 return
 
+    elif message.content.lower() == 'ggs':
+        if random.randint(0,8) == 0:
+            await message.channel.send(ggs.ggs())
+            print('Bot said ggs.')
+            return
+
     elif '!thank' in message.content.lower():
         discordMessage = message.content.lower()
-        splitList = discordMessage.split(sep=' ')
-        if '!thank' in splitList[0] and len(splitList) >= 2:
-            thankMsg = discordMessage.split(sep='!thank ')
-            if 'reposti' in thankMsg[1]:
-                await message.channel.send(
+        if thank.thank(discordMessage):
+            await message.channel.send(
                     f'fuck you <@{message.author.id}>'                    
-                    )                
-                return
-            elif 'bot' in thankMsg[1]:
-                await message.channel.send(
-                    f'fuck you <@{message.author.id}>'
-                    )
-                return
-            else:
-                await message.channel.send(
-                    f'fuck you ' + thankMsg[1]
-                    )
-                print('Bot "thanked" someone.')
-            return
+                    )        
         else:
-            return
+            thankMsg = discordMessage.split(sep='!thank ')
+            await message.channel.send(f'fuck you ' + thankMsg[1])
+        print('Bot "thanked" someone.')
+        return
 
     elif '!8ball' in message.content.lower():
         await message.channel.send(EightBallList[random.randint(0,(len(EightBallList))-1)])
@@ -180,122 +189,68 @@ async def on_message(message):
                 msg = message.reference.message_id                    
                 msgText = await message.channel.fetch_message(msg)                               
                 await msgText.delete()
-                await realChannel.send(msgText.content)
+                if len(msgText.content) > 0:
+                    await realChannel.send(msgText.content)
                 if len(msgText.attachments) > 0:
                     for x in range(len(msgText.attachments)):
                         await realChannel.send(msgText.attachments[x].url)
                 print(message.author.name + " moved " + msgText.author.name + "\'s message to #" + str(realChannel) + ".")
                 return
-                
+
+    # Uwu'ifies messages            
     elif '!uwu' in message.content.lower():
         discordMessage = message.content.split(sep=' ')
         if len(discordMessage) == 1:
-            if message.reference == None:
-                await message.channel.send(".env")
+            if message.reference == None: # No reply or message
+                await message.channel.send("You didn't write or reply to anything, dingus.")
                 return
+
             else:
                 msg = message.reference.message_id
                 msgText = await message.channel.fetch_message(msg)
                 msgText = msgText.content.lower()
-                msgUwu1 = msgText.replace("l", 'w')
-                msgUwu2 = msgUwu1.replace('r', 'w')
-                msgUwu3 = msgUwu2.replace('this', 'dis')
-                msgUwu4 = msgUwu3.replace('thewe', 'dewe')
-                msgUwu5 = msgUwu4.replace('that', 'dat')
-                if len(msgUwu5) < 1997:
-                    await message.channel.send(msgUwu5 + ' uwu')
-                    return
-                else:
-                    await message.channel.send(msgUwu5)
-        elif len(discordMessage) > 1:
-            uwuMsg = message.content.split(" ", 1)
-            uwuMsg[1] = uwuMsg[1].lower()
-            msgUwu1 = uwuMsg[1].replace("l", 'w')
-            msgUwu2 = msgUwu1.replace('r', 'w')
-            msgUwu3 = msgUwu2.replace('this', 'dis')
-            msgUwu4 = msgUwu3.replace('there', 'dewe')
-            msgUwu5 = msgUwu4.replace('that', 'dat')
-            if len(msgUwu5) < 1997:
-                await message.channel.send(msgUwu5 + ' uwu')
+                await message.channel.send(uwu.uwuReply(msgText))
                 return
-            else:
-                await message.channel.send(msgUwu5)
-                return
+                
+        elif len(discordMessage) > 1: # If wrote a message
+            msgText = message.content.split (" ", 1)
+            await message.channel.send(uwu.uwuText(msgText))
+            return
+
+    elif '!deez' in message.content.lower():
+        deezNuts = random.sample(words.words(), 1)
+        await message.channel.send(deezNuts[0] + deezList[random.randint(0,(len(deezList))-1)])
+        return
                       
     elif 'http' in message.content.lower(): # Checks if message contains a link.
+        # Exempts links directly to skeb artist pages
+        if 'skeb' in message.content.lower():
+            if 'works' not in message.content.lower():
+                return
+        elif 'meltyblood.club' in message.content.lower():
+            return
                
-        # Splits the link(s) into individual string(s).
-        links = []
+        # Splits the link(s) into individual string(s).        
         discordMessage = message.content.lower()
-        splitList = discordMessage.split(sep=' ')
-        for x in range(len(splitList)):
-            if 'http' in splitList[x]:                
-                links.append(splitList[x])
-        for x in range(len(links)): # Culls unneeded URL info in Twitter links
-            if 'twitter' in links[x]: 
-                flagKill = links[x].split(sep='?')
-                links[x] = flagKill[0]
-        for x in range(len(links)): 
-            if 'youtube' in links[x]: 
-                y = links[x].split(sep='=')
-                for z in range (len(y)):
-                    if '&' in y[z]:
-                        flagKill = y[z].split(sep='&')
-                        links[x] = flagKill[0]
-                        break
-                    else:
-                        links[x] = y[z]                                        
-        for x in range(len(links)): # These isolate the Youtube video code from the URL
-            if 'youtu.be' in links[x]: 
-                y = links[x].split(sep='/')
-                flagKill = y[3].split(sep='?')
-                links[x] = flagKill[0]
-        
+        if reposti.reposti(discordMessage, message.guild.name):
+            await message.channel.send(f'<@{message.author.id}> <:Reposti:781288738843656222> '+ # Ladies and gentlemen, we got 'em.
+                    'General Reposti! You are an old one.')
+            currentTime = ['DATE', 'HOUR', 'MINUTE', 'SECOND']                    
+            tempList = str(message.created_at).split(sep=' ')
+            currentTime[0] = tempList[0]
+            timeList = tempList[1].split(sep=':')
+            if int(timeList[0]) <= 4:
+                realHours = int(timeList[0]) + 8
+            else:
+                realHours = int(timeList[0]) - 4 
 
-        # Converts all links in existing file to a list.
-        f = open(f'{message.guild.name} linkList.txt', 'r')
-        linkList = f.readlines()
-        f.close()        
-        while len(linkList) >= 250: # Culls old links when there are more than 250.
-            del linkList[0]
-            f = open(f'{message.guild.name} linkList.txt', 'w')
-            f.write(linkList[0])
-            f.close()
-            del linkList[0]
-            for x in range(len(linkList)):
-                f = open(f'{message.guild.name} linkList.txt', 'a')
-                f.write(linkList[x])
-                f.close()            
-
-        for y in range(len(links)): # Loops through the links that were just posted and checks them against all old links.
-            for x in linkList:
-                if x == links[y] + '\n':
-                    await message.channel.send(
-                        f'<@{message.author.id}> <:Reposti:781288738843656222> '+ # Ladies and gentlemen, we got 'em.
-                        'General Reposti! You are an old one.'
-                        )
-                    # Command line logging.
-                    # Don't look at this. It's hideous and only here so I can be nosy. 
-                    currentTime = ['DATE', 'HOUR', 'MINUTE', 'SECOND']                    
-                    tempList = str(message.created_at).split(sep=' ')
-                    currentTime[0] = tempList[0]
-                    timeList = tempList[1].split(sep=':')
-                    if int(timeList[0]) <= 4:
-                        realHours = int(timeList[0]) + 7
-                    else:
-                        realHours = int(timeList[0]) - 5 
-                    currentTime[1] = str(realHours)
-                    currentTime[2] = timeList[1]
-                    finalList = timeList[2].split(sep='.')
-                    currentTime[3] = finalList[0]
-                    print(message.author.name + f" reposti'd in {message.guild.name} at " +
-                        currentTime[1] + ':' + currentTime[2] + ':' + currentTime[3] + ', on ' + currentTime[0] + '.'
-                    )
-                    break            
-        f = open(f'{message.guild.name} linkList.txt', 'a') # Appends newly posted links to the text file. 
-        for y in range(len(links)):
-            f.write(links[y] + '\n')
-        f.close()
-        return        
+            currentTime[1] = str(realHours)
+            currentTime[2] = timeList[1]
+            finalList = timeList[2].split(sep='.')
+            currentTime[3] = finalList[0]
+            print(message.author.name + f" reposti'd in Hammertown at " +
+                currentTime[1] + ':' + currentTime[2] + ':' + currentTime[3] + ', on ' + currentTime[0] + '.'
+            )
+            return        
 
 client.run(TOKEN)
